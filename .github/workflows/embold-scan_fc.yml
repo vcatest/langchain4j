@@ -1,5 +1,3 @@
-# .github/workflows/embold-scan_fc.yml
-
 name: Embold Code Quality Scan
 
 on:
@@ -27,9 +25,28 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      # Step 3: Build the project and run SpotBugs
+      # Step 3: Build the project and run SpotBugs (with Retry Logic for transient errors)
       - name: Build with Maven and Run Analysis
-        run: mvn -B clean verify -DskipTests
+        # This loop attempts to run the Maven build up to 3 times.
+        # It handles transient network failures (like the 500 Internal Server Error)
+        # by only proceeding if the build is successful (exit code 0).
+        run: |
+          for i in 1 2 3; do
+            echo "Attempt $i of 3: Running Maven build..."
+            # -DskipTests is kept to ensure speed, but the build error was during 'verify'
+            if mvn -B clean verify -DskipTests; then
+              echo "Maven build succeeded on attempt $i."
+              exit 0 # Success, exit the script
+            else
+              # If it's the last attempt, fail the job
+              if [ $i -eq 3 ]; then
+                echo "Maven build failed after 3 attempts."
+                exit 1 
+              fi
+              echo "Maven build failed. Waiting 10 seconds before retrying..."
+              sleep 10
+            fi
+          done
 
       # Step 4: Download and extract the Embold scanner
       - name: Download and Extract Scanner
