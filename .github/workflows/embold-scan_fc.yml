@@ -37,7 +37,7 @@ jobs:
       - name: Build with Maven and Run Analysis
         run: |
           echo "Running Maven verify with SpotBugs..."
-          mvn -B verify -DskipTests
+          mvn -B verify -Dmaven.test.skip=true
 
       # Step 5: Download and extract the Embold scanner
       - name: Download and Extract Scanner
