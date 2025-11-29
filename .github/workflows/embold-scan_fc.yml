@@ -24,45 +24,33 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-          # Add this line to improve Maven performance and stability in CI environments
           cache: 'maven'
 
-      # Step 3: Build the project and run SpotBugs (with Retry Logic for transient errors)
-      - name: Build with Maven and Run Analysis
-        # This loop attempts to run the Maven build up to 3 times.
-        # The '-U' flag is added to force an update of all snapshots 
-        # on every attempt, which helps resolve "Could not find artifact" errors 
-        # where the dependency might have just been published or was previously cached as failed.
+      # Step 3: Install local modules to Maven local repository
+      - name: Install Local Modules
         run: |
-          for i in 1 2 3; do
-            echo "Attempt $i of 3: Running Maven build..."
-            # **CRITICAL CHANGE: Added -U flag**
-            if mvn -B clean verify -DskipTests -U; then
-              echo "Maven build succeeded on attempt $i."
-              exit 0 # Success, exit the script
-            else
-              # If it's the last attempt, fail the job
-              if [ $i -eq 3 ]; then
-                echo "Maven build failed after 3 attempts."
-                exit 1 
-              fi
-              echo "Maven build failed. Waiting 10 seconds before retrying..."
-              sleep 10
-            fi
-          done
+          echo "Installing local modules to resolve SNAPSHOT dependencies..."
+          mvn -B clean install -DskipTests -U
+        continue-on-error: false
 
-      # Step 4: Download and extract the Embold scanner
+      # Step 4: Build the project and run SpotBugs
+      - name: Build with Maven and Run Analysis
+        run: |
+          echo "Running Maven verify with SpotBugs..."
+          mvn -B verify -DskipTests
+
+      # Step 5: Download and extract the Embold scanner
       - name: Download and Extract Scanner
         run: |
           curl ${{ vars.EMBOLD_SCANNER_URL }} -o browserstack-codequality-scanner-archive.tar.gz
           tar xvf browserstack-codequality-scanner-archive.tar.gz
 
-      ## Step 5: Download the repository configuration file
+      # Step 6: Download the repository configuration file
       - name: Download Repository Configuration
         run: |
           curl --silent --location --request GET "${{ vars.EMBOLD_URL_JAVA }}/api/v1/repositories/fa009b3b6cb03958e4edf6b4fcc88b18/scans/config/download" --header "Authorization: Bearer ${{ secrets.EMBOLD_TOKEN_JAVA }}" -o repository-configuration.json
 
-      # Step 6: Run the Embold analysis scanner
+      # Step 7: Run the Embold analysis scanner
       - name: Run Embold Scanner
         env:
           EMBOLD_TOKEN: ${{ secrets.EMBOLD_TOKEN_JAVA }}
