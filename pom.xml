@@ -9,23 +9,18 @@
     <name>LangChain4j :: Aggregator</name>
 
     <modules>
-
         <module>langchain4j-parent</module>
         <module>langchain4j-bom</module>
-
         <module>langchain4j-core</module>
         <module>langchain4j-test</module>
         <module>langchain4j</module>
         <module>langchain4j-kotlin</module>
-
         <module>langchain4j-easy-rag</module>
         <module>langchain4j-mcp</module>
 
-        <!-- http clients -->
         <module>langchain4j-http-client</module>
         <module>http-clients/langchain4j-http-client-jdk</module>
 
-        <!-- model providers -->
         <module>langchain4j-anthropic</module>
         <module>langchain4j-azure-open-ai</module>
         <module>langchain4j-bedrock</module>
@@ -48,7 +43,6 @@
         <module>langchain4j-voyage-ai</module>
         <module>langchain4j-watsonx</module>
 
-        <!-- embedding stores -->
         <module>langchain4j-azure-ai-search</module>
         <module>langchain4j-azure-cosmos-mongo-vcore</module>
         <module>langchain4j-azure-cosmos-nosql</module>
@@ -70,7 +64,6 @@
         <module>langchain4j-vespa</module>
         <module>langchain4j-weaviate</module>
 
-        <!-- document loaders -->
         <module>document-loaders/langchain4j-document-loader-amazon-s3</module>
         <module>document-loaders/langchain4j-document-loader-azure-storage-blob</module>
         <module>document-loaders/langchain4j-document-loader-github</module>
@@ -79,133 +72,83 @@
         <module>document-loaders/langchain4j-document-loader-tencent-cos</module>
         <module>document-loaders/langchain4j-document-loader-google-cloud-storage</module>
 
-        <!-- document parsers -->
         <module>document-parsers/langchain4j-document-parser-apache-pdfbox</module>
         <module>document-parsers/langchain4j-document-parser-apache-poi</module>
         <module>document-parsers/langchain4j-document-parser-apache-tika</module>
 
-        <!-- document transformers -->
         <module>document-transformers/langchain4j-document-transformer-jsoup</module>
 
-        <!-- code execution engines -->
         <module>code-execution-engines/langchain4j-code-execution-engine-graalvm-polyglot</module>
         <module>code-execution-engines/langchain4j-code-execution-engine-judge0</module>
 
-        <!-- web search engines -->
         <module>web-search-engines/langchain4j-web-search-engine-google-custom</module>
         <module>web-search-engines/langchain4j-web-search-engine-tavily</module>
         <module>web-search-engines/langchain4j-web-search-engine-searchapi</module>
 
-        <!-- embedding store filter parsers -->
         <module>embedding-store-filter-parsers/langchain4j-embedding-store-filter-parser-sql</module>
 
-        <!-- experimental -->
         <module>experimental/langchain4j-experimental-sql</module>
         <module>langchain4j-agentic</module>
         <module>langchain4j-agentic-a2a</module>
 
-        <!-- integration tests -->
         <module>integration-tests</module>
-
     </modules>
 
     <properties>
         <gib.disable>true</gib.disable>
     </properties>
 
+    <repositories>
+        <repository>
+            <id>sonatype-snapshots</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
     <build>
         <plugins>
-        <plugin>
-    <groupId>com.github.spotbugs</groupId>
-    <artifactId>spotbugs-maven-plugin</artifactId>
-    <version>4.8.5.0</version> <!-- Use the latest version -->
-    <configuration>
-        <!-- Enable XML report output -->
-        <xmlOutput>true</xmlOutput>
-        <failOnError>false</failOnError>
-
-        <!-- Optional: You can disable the default HTML report if you don't need it -->
-        <htmlOutput>false</htmlOutput>
-
-        <!-- Optional: Set effort to Max for a more thorough analysis -->
-        <effort>Max</effort>
-
-        <!-- Optional: Set a threshold for bug severity to be included in the report -->
-        <threshold>Low</threshold>
-        <failThreshold>High</failThreshold>
-
-        <!-- =================================================== -->
-        <!-- == ADD THIS SECTION to enable FindSecBugs        == -->
-        <!-- =================================================== -->
-        <plugins>
             <plugin>
-                <groupId>com.h3xstream.findsecbugs</groupId>
-                <artifactId>findsecbugs-plugin</artifactId>
-                <version>1.12.0</version> <!-- Use the latest FindSecBugs version -->
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-maven-plugin</artifactId>
+                <version>4.8.5.0</version>
+                <configuration>
+                    <xmlOutput>true</xmlOutput>
+                    <failOnError>false</failOnError>
+                    <htmlOutput>false</htmlOutput>
+                    <effort>Max</effort>
+                    <threshold>Low</threshold>
+                    <failThreshold>High</failThreshold>
+                    
+                    <plugins>
+                        <plugin>
+                            <groupId>com.h3xstream.findsecbugs</groupId>
+                            <artifactId>findsecbugs-plugin</artifactId>
+                            <version>1.12.0</version>
+                        </plugin>
+                    </plugins>
+
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>spotbugs-check</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
-        </plugins>
-
-    </configuration>
-    <executions>
-        <execution>
-            <id>spotbugs-report</id>
-            <!-- Bind the report generation to the 'verify' phase -->
-            <phase>verify</phase>
-            <goals>
-                <!-- Use the 'spotbugs' goal, which generates a report and does NOT fail the build -->
-                <goal>check</goal>
-            </goals>
-        </execution>
-    </executions>
-</plugin>
-
-        <plugin>
-    <groupId>com.github.spotbugs</groupId>
-    <artifactId>spotbugs-maven-plugin</artifactId>
-    <version>4.8.5.0</version> <!-- Use the latest version -->
-    <configuration>
-        <!-- Enable XML report output -->
-        <xmlOutput>true</xmlOutput>
-
-        <!-- Optional: You can disable the default HTML report if you don't need it -->
-        <htmlOutput>false</htmlOutput>
-
-        <!-- Optional: Set effort to Max for a more thorough analysis -->
-        <effort>Max</effort>
-
-        <!-- Optional: Set a threshold for bug severity to be included in the report -->
-        <threshold>Low</threshold>
-
-        <!-- =================================================== -->
-        <!-- == ADD THIS SECTION to enable FindSecBugs        == -->
-        <!-- =================================================== -->
-        <plugins>
-            <plugin>
-                <groupId>com.h3xstream.findsecbugs</groupId>
-                <artifactId>findsecbugs-plugin</artifactId>
-                <version>1.12.0</version> <!-- Use the latest FindSecBugs version -->
-            </plugin>
-        </plugins>
-
-    </configuration>
-    <executions>
-        <execution>
-            <id>spotbugs-report</id>
-            <!-- Bind the report generation to the 'verify' phase -->
-            <phase>verify</phase>
-            <goals>
-                <!-- Use the 'spotbugs' goal, which generates a report and does NOT fail the build -->
-                <goal>spotbugs</goal>
-            </goals>
-        </execution>
-    </executions>
-</plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-deploy-plugin</artifactId>
                 <version>3.1.4</version>
                 <configuration>
-                    <!-- do not deploy langchain4j-aggregator's pom.xml (this file) -->
                     <skip>true</skip>
                 </configuration>
             </plugin>
@@ -283,7 +226,6 @@
     </reporting>
 
     <profiles>
-
         <profile>
             <id>jdk21</id>
             <activation>
@@ -296,7 +238,6 @@
 
         <profile>
             <id>openrewrite</id>
-            <!-- `mvn -Popenrewrite -Dspotless.check.skip=true org.openrewrite.maven:rewrite-maven-plugin:run` -->
             <build>
                 <plugins>
                     <plugin>
