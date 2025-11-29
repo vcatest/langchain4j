@@ -30,7 +30,7 @@ jobs:
       - name: Install Local Modules
         run: |
           echo "Installing local modules to resolve SNAPSHOT dependencies..."
-          mvn -B clean install -DskipTests -U
+          mvn -B clean install -Dmaven.test.skip=true -U
         continue-on-error: false
 
       # Step 4: Build the project and run SpotBugs
