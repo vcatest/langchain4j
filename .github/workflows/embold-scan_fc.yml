@@ -55,14 +55,22 @@ jobs:
       - name: Install Local Modules
         run: |
           echo "Installing local modules to resolve SNAPSHOT dependencies..."
-          mvn -B clean install -DskipTests -Dmaven.javadoc.skip=true -U
+          mvn -B clean install -DskipTests -Dmaven.javadoc.skip=true -U -pl '!langchain4j' --fail-at-end
         continue-on-error: false
+
+      # Step 3b: Build langchain4j module without test dependencies
+      - name: Build langchain4j module
+        run: |
+          echo "Building langchain4j module without resolving test dependencies..."
+          cd langchain4j
+          mvn -B clean install -Dmaven.test.skip=true -Dmaven.javadoc.skip=true
+        continue-on-error: true
 
       # Step 4: Build the project and run SpotBugs
       - name: Build with Maven and Run Analysis
         run: |
           echo "Running Maven verify with SpotBugs..."
-          mvn -B verify -DskipTests -Dmaven.javadoc.skip=true
+          mvn -B verify -Dmaven.test.skip=true -Dmaven.javadoc.skip=true
 
       # Step 5: Download and extract the Embold scanner
       - name: Download and Extract Scanner
