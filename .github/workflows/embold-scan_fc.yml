@@ -24,17 +24,20 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
+          # Add this line to improve Maven performance and stability in CI environments
+          cache: 'maven'
 
       # Step 3: Build the project and run SpotBugs (with Retry Logic for transient errors)
       - name: Build with Maven and Run Analysis
         # This loop attempts to run the Maven build up to 3 times.
-        # It handles transient network failures (like the 500 Internal Server Error)
-        # by only proceeding if the build is successful (exit code 0).
+        # The '-U' flag is added to force an update of all snapshots 
+        # on every attempt, which helps resolve "Could not find artifact" errors 
+        # where the dependency might have just been published or was previously cached as failed.
         run: |
           for i in 1 2 3; do
             echo "Attempt $i of 3: Running Maven build..."
-            # -DskipTests is kept to ensure speed, but the build error was during 'verify'
-            if mvn -B clean verify -DskipTests; then
+            # **CRITICAL CHANGE: Added -U flag**
+            if mvn -B clean verify -DskipTests -U; then
               echo "Maven build succeeded on attempt $i."
               exit 0 # Success, exit the script
             else
