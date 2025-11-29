@@ -26,18 +26,43 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
+      # Step 2b: Configure Maven settings for snapshot repositories
+      - name: Configure Maven Settings
+        run: |
+          mkdir -p ~/.m2
+          cat > ~/.m2/settings.xml <<EOF
+          <settings>
+            <profiles>
+              <profile>
+                <id>sonatype-snapshots</id>
+                <repositories>
+                  <repository>
+                    <id>oss-sonatype-snapshots</id>
+                    <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+                    <releases><enabled>false</enabled></releases>
+                    <snapshots><enabled>true</enabled></snapshots>
+                  </repository>
+                </repositories>
+              </profile>
+            </profiles>
+            <activeProfiles>
+              <activeProfile>sonatype-snapshots</activeProfile>
+            </activeProfiles>
+          </settings>
+          EOF
+
       # Step 3: Install local modules to Maven local repository
       - name: Install Local Modules
         run: |
           echo "Installing local modules to resolve SNAPSHOT dependencies..."
-          mvn -B clean install -Dmaven.test.skip=true -U
+          mvn -B clean install -DskipTests -Dmaven.javadoc.skip=true -U
         continue-on-error: false
 
       # Step 4: Build the project and run SpotBugs
       - name: Build with Maven and Run Analysis
         run: |
           echo "Running Maven verify with SpotBugs..."
-          mvn -B verify -Dmaven.test.skip=true
+          mvn -B verify -DskipTests -Dmaven.javadoc.skip=true
 
       # Step 5: Download and extract the Embold scanner
       - name: Download and Extract Scanner
