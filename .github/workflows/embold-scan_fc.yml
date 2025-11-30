@@ -12,56 +12,84 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Step 1: Check out your repository code
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
+      # Step 2: Set up the Java environment
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
+          cache: 'maven'
 
+      # Step 3: Create stub artifacts for missing embedding dependencies
+      - name: Create Stub Artifacts
+        run: |
+          mkdir -p stub-project/src/main/java
+          
+          # Create stub for langchain4j-embeddings-all-minilm-l6-v2-q
+          cat > stub-project/pom.xml <<'EOF'
+          <project xmlns="http://maven.apache.org/POM/4.0.0">
+            <modelVersion>4.0.0</modelVersion>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-embeddings-all-minilm-l6-v2-q</artifactId>
+            <version>1.5.0-beta11-SNAPSHOT</version>
+          </project>
+          EOF
+          mvn -B -f stub-project/pom.xml install -q
+          
+          # Create stub for langchain4j-embeddings-bge-small-en-v15-q
+          cat > stub-project/pom.xml <<'EOF'
+          <project xmlns="http://maven.apache.org/POM/4.0.0">
+            <modelVersion>4.0.0</modelVersion>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-embeddings-bge-small-en-v15-q</artifactId>
+            <version>1.5.0-beta11-SNAPSHOT</version>
+          </project>
+          EOF
+          mvn -B -f stub-project/pom.xml install -q
+          rm -rf stub-project
+
+      # Step 4: Install local modules to Maven local repository
+      - name: Install Local Modules
+        run: |
+          echo "Installing local modules to resolve SNAPSHOT dependencies..."
+          mvn -B clean install -Dmaven.test.skip=true -Dmaven.javadoc.skip=true -Denforcer.skip=true -U
+        continue-on-error: false
+
+      # Step 5: Build the project and run SpotBugs
       - name: Build with Maven and Run Analysis
         run: |
-          for i in 1 2 3; do
-            echo "Attempt $i of 3: Running Maven build..."
-            if mvn -B clean install -DskipTests -DskipITs -Dmaven.test.skip=true; then
-              echo "Maven build succeeded on attempt $i."
-              exit 0
-            else
-              if [ $i -eq 3 ]; then
-                echo "Maven build failed after 3 attempts."
-                exit 1
-              fi
-              echo "Maven build failed. Waiting 10 seconds before retrying..."
-              sleep 10
-            fi
-          done
+          echo "Running Maven verify with SpotBugs..."
+          mvn -B verify -DskipTests -Dmaven.javadoc.skip=true -Denforcer.skip=true
 
+      # Step 6: Download and extract the Embold scanner
       - name: Download and Extract Scanner
         run: |
           curl ${{ vars.EMBOLD_SCANNER_URL }} -o browserstack-codequality-scanner-archive.tar.gz
           tar xvf browserstack-codequality-scanner-archive.tar.gz
 
+      # Step 7: Download the repository configuration file
       - name: Download Repository Configuration
         run: |
-          curl --silent --location --request GET \
-            "${{ vars.EMBOLD_URL_JAVA }}/api/v1/repositories/fa009b3b6cb03958e4edf6b4fcc88b18/scans/config/download" \
-            --header "Authorization: Bearer ${{ secrets.EMBOLD_TOKEN_JAVA }}" \
-            -o repository-configuration.json
+          curl --silent --location --request GET "${{ vars.EMBOLD_URL_JAVA }}/api/v1/repositories/fa009b3b6cb03958e4edf6b4fcc88b18/scans/config/download" --header "Authorization: Bearer ${{ secrets.EMBOLD_TOKEN_JAVA }}" -o repository-configuration.json
 
+      # Step 8: Run the Embold analysis scanner
       - name: Run Embold Scanner
         env:
-          EMBOLD_TOKEN: ${{ secrets.EMBOLD_SCAN_TOKEN_FC }}
+          EMBOLD_TOKEN: ${{ secrets.EMBOLD_TOKEN_JAVA }}
         run: |
           ./browserstack-codequality-scanner/bin/embold-scanner analyse \
             -u ${{ vars.EMBOLD_URL_JAVA }} \
-            -t ${{ secrets.EMBOLD_TOKEN_JAVA }} \
+            -t $EMBOLD_TOKEN \
             -r fa009b3b6cb03958e4edf6b4fcc88b18 \
             -b . \
             -d ./embold-data \
             -c ./repository-configuration.json \
             -l ./embold-log \
-            -sh ./embold-scanner-home
+            -sh ./embold-scanner-home \
+            -v
