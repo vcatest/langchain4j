@@ -52,7 +52,9 @@ jobs:
             echo "Attempt $i of 3: Running Maven build..."
             # Use -Dmaven.test.skip=true to skip test compilation and dependencies
             # Add -U to force snapshot updates and avoid cached resolution failures
-            if mvn -B -U clean verify -Dmaven.test.skip=true; then
+            # Exclude problematic modules while building all dependencies (-am)
+            # This avoids missing test SNAPSHOTs but compiles the rest for analysis
+            if mvn -B -U clean install -Dmaven.test.skip=true -pl '!langchain4j,!langchain4j-test,!integration-tests' -am; then
               echo "Maven build succeeded on attempt $i."
               exit 0 # Success, exit the script
             else
