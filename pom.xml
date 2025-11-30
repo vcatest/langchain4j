@@ -94,6 +94,37 @@
         <module>integration-tests</module>
     </modules>
 
+    <profiles>
+        <!-- CI profile to resolve snapshot embeddings and local test artifacts -->
+        <profile>
+            <id>ci-embeddings-snapshots</id>
+            <repositories>
+                <!-- Sonatype snapshots repository for SNAPSHOT artifacts -->
+                <repository>
+                    <id>sonatype-snapshots</id>
+                    <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+                    <releases>
+                        <enabled>false</enabled>
+                    </releases>
+                    <snapshots>
+                        <enabled>true</enabled>
+                    </snapshots>
+                </repository>
+                <!-- Local file-based repository used by tests (if present on runner) -->
+                <repository>
+                    <id>local-classpath-test-repo</id>
+                    <url>file://${project.basedir}/langchain4j/src/test/externalLib</url>
+                    <releases>
+                        <enabled>true</enabled>
+                    </releases>
+                    <snapshots>
+                        <enabled>true</enabled>
+                    </snapshots>
+                </repository>
+            </repositories>
+        </profile>
+    </profiles>
+
     <properties>
         <gib.disable>true</gib.disable>
     </properties>
