@@ -25,6 +25,23 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      # Optional: Pre-install missing test SNAPSHOT if bundled
+      # This keeps the workflow future-proof if tests are enabled later.
+      - name: Pre-install local test dependency if present
+        run: |
+          SNAPSHOT_JAR="langchain4j/src/test/externalLib/langchain4j-embeddings-all-minilm-l6-v2-q-1.5.0-beta11-SNAPSHOT.jar"
+          if [ -f "$SNAPSHOT_JAR" ]; then
+            echo "Found local SNAPSHOT jar: $SNAPSHOT_JAR. Installing to local Maven repo..."
+            mvn -B install:install-file \
+              -Dfile="$SNAPSHOT_JAR" \
+              -DgroupId=dev.langchain4j \
+              -DartifactId=langchain4j-embeddings-all-minilm-l6-v2-q \
+              -Dversion=1.5.0-beta11-SNAPSHOT \
+              -Dpackaging=jar
+          else
+            echo "No local SNAPSHOT jar found at $SNAPSHOT_JAR. Skipping install."
+          fi
+
       # Step 3: Build the project and run SpotBugs (with Retry Logic for transient errors)
       - name: Build with Maven and Run Analysis
         # This loop attempts to run the Maven build up to 3 times.
