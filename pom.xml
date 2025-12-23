@@ -126,6 +126,7 @@
     </profiles>
 
     <properties>
+        <sonar.organization>vcatest</sonar.organization>
         <gib.disable>true</gib.disable>
     </properties>
 
